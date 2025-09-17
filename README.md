@@ -1,29 +1,58 @@
-# Welcome to your Expo app 👋
+# Expo Router TV demo 👋
+
+![Apple TV screen shot](https://github.com/douglowder/examples/assets/6577821/a881466f-a7a0-4c66-b1fc-33235c466997)
+![Android TV screen shot](https://github.com/douglowder/examples/assets/6577821/815c8e01-8275-4cc1-bd57-b9c8bce1fb02)
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Get started
+This project uses
 
-1. Install dependencies
+- the [React Native TV fork](https://github.com/react-native-tvos/react-native-tvos), which supports both phone (Android and iOS) and TV (Android TV and Apple TV) targets
+- the [React Native TV config plugin](https://github.com/react-native-tvos/config-tv/tree/main/packages/config-tv) to allow Expo prebuild to modify the project's native files for TV builds
 
-   ```bash
-   npm install
-   ```
+## 🚀 How to use
 
-2. Start the app
+- `cd` into the project
 
-   ```bash
-   npx expo start
-   ```
+- For TV development:
 
-In the output, you'll find options to open the app in a
+```sh
+yarn
+yarn prebuild:tv # Executes clean Expo prebuild with TV modifications
+yarn ios # Build and run for Apple TV
+yarn android # Build for Android TV
+yarn web # Run the project on web from localhost
+```
+- For mobile development:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+```sh
+yarn
+yarn prebuild # Executes Expo prebuild with no TV modifications
+yarn ios # Build and run for iOS
+yarn android # Build for Android mobile
+yarn web # Run the project on web from localhost
+```
+
+> **_NOTE:_**
+> Setting the environment variable `EXPO_TV=1` enables the `@react-native-tvos/config-tv` plugin to modify the project for TV.
+> This can also be done by setting the parameter `isTV` to true in the `app.json`.
+
+## Development
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+This project includes a [demo](./components/EventHandlingDemo.tsx) showing how to use React Native TV APIs to highlight controls as the user navigates the screen with the remote control.
+
+## Deploy
+
+Deploy on all platforms with Expo Application Services (EAS).
+
+- Deploy the website: `npx eas-cli deploy` — [Learn more](https://docs.expo.dev/eas/hosting/get-started/)
+- Deploy on iOS and Android using: `npx eas-cli build` — [Learn more](https://expo.dev/eas)
+
+## TV specific file extensions
+
+This project includes an [example Metro configuration](./metro.config.js) that allows Metro to resolve application source files with TV-specific code, indicated by specific file extensions (`*.ios.tv.tsx`, `*.android.tv.tsx`, `*.tv.tsx`).
 
 ## Get a fresh project
 
@@ -40,7 +69,7 @@ This command will move the starter code to the **app-example** directory and cre
 To learn more about developing your project with Expo, look at the following resources:
 
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- [Learn Expo tutorial](https://docs.expo.dev/learn): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
 ## Join the community
 
