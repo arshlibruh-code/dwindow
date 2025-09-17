@@ -2,6 +2,17 @@
 
 A React Native TV application built with Expo that provides interactive map functionality on Android TV and web platforms. dwindow combines the power of OpenFreeMap with MapLibre GL JS to deliver a seamless mapping experience optimized for television interfaces.
 
+## Demo
+
+![GIF](assets/images/demo/demo.gif)
+*Live demonstration of the application*
+
+![Screenshot 1](assets/images/demo/1a.png)
+*Web interface showing the interactive map*
+
+![Screenshot 2](assets/images/demo/1b.png)
+*Android TV interface with remote navigation*
+
 ## Overview
 
 dwindow is designed to run on both web browsers and Android TV devices, featuring:
