@@ -9,6 +9,12 @@ interface WebMapsProps {
 let MapboxGL: any = null;
 if (typeof window !== 'undefined') {
   try {
+    // Load Mapbox CSS
+    const link = document.createElement('link');
+    link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    
     MapboxGL = require('mapbox-gl');
     MapboxGL.accessToken = 'pk.eyJ1Ijoic2FpdGVqYXVzIiwiYSI6ImNrM2R5emU5cTFmcHYzaXBkbzZzcjE1enkifQ.wB24J_XpAwaarHM1fmJ4Xw';
   } catch (e) {

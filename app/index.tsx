@@ -2,21 +2,17 @@ import React from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { useScale } from '@/hooks/useScale';
 
-// Platform-specific map components
-import WebMapsComponent from '../components/maps.web';
-import NativeMapsComponent from '../components/maps.native';
+// WebView map component
+import WebViewMapsComponent from '../components/maps.webview';
 
 export default function HomeScreen() {
   const scale = useScale();
   const styles = useHomeScreenStyles(scale);
 
-  // Web: Use Mapbox
-  if (Platform.OS === 'web') {
-    return <WebMapsComponent styles={styles} />;
-  }
+  console.log(`🚀 [${Platform.OS.toUpperCase()}] HomeScreen loaded - Platform: ${Platform.OS}`);
 
-  // Native: Use expo-maps (Google Maps)
-  return <NativeMapsComponent styles={styles} />;
+  // WebView + Leaflet for both web and native
+  return <WebViewMapsComponent styles={styles} />;
 }
 
 const useHomeScreenStyles = (scale: number) => StyleSheet.create({
