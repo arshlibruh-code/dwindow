@@ -1,36 +1,21 @@
-import { Text, type TextProps } from 'react-native';
+import React from 'react';
+import { Text, TextProps } from 'react-native';
 
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { useTextStyles } from '@/hooks/useTextStyles';
+interface ThemedTextProps extends TextProps {
+  type?: 'title' | 'link' | 'default';
+}
 
-export type ThemedTextProps = TextProps & {
-  lightColor?: string;
-  darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
-};
+export function ThemedText({ type = 'default', style, ...props }: ThemedTextProps) {
+  const getTextStyle = () => {
+    switch (type) {
+      case 'title':
+        return { fontSize: 24, fontWeight: 'bold', color: '#333' };
+      case 'link':
+        return { fontSize: 16, color: '#007AFF', textDecorationLine: 'underline' };
+      default:
+        return { fontSize: 16, color: '#333' };
+    }
+  };
 
-export function ThemedText({
-  style,
-  lightColor,
-  darkColor,
-  type = 'default',
-  ...rest
-}: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
-  const styles = useTextStyles();
-
-  return (
-    <Text
-      style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
-        style,
-      ]}
-      {...rest}
-    />
-  );
+  return <Text style={[getTextStyle(), style]} {...props} />;
 }

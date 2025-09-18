@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
+import { MapConfig } from '@/constants/MapConfig';
 
 // WebView is only available on native platforms
 let WebView: any = null;
@@ -10,8 +11,6 @@ if (Platform.OS !== 'web') {
     console.log('WebView not available');
   }
 }
-
-// MapLibre GL JS for web - we'll load it dynamically in useEffect
 
 interface WebViewMapsProps {
   styles: any;
@@ -27,19 +26,15 @@ export default function WebViewMapsComponent({ styles }: WebViewMapsProps) {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && !maplibreLoaded) {
       // Load CSS
       const link = document.createElement('link');
-      link.href = 'https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css';
+      link.href = 'https://unpkg.com/maplibre-gl@5.7.2/dist/maplibre-gl.css';
       link.rel = 'stylesheet';
       document.head.appendChild(link);
 
       // Load JS
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js';
-      script.onload = () => {
-        setMaplibreLoaded(true);
-      };
-      script.onerror = () => {
-        console.log('❌ [WEB] Failed to load MapLibre GL JS');
-      };
+      script.src = 'https://unpkg.com/maplibre-gl@5.7.2/dist/maplibre-gl.js';
+      script.onload = () => setMaplibreLoaded(true);
+      script.onerror = () => console.log('❌ [WEB] Failed to load MapLibre GL JS');
       document.head.appendChild(script);
     }
   }, [maplibreLoaded]);
@@ -52,13 +47,117 @@ export default function WebViewMapsComponent({ styles }: WebViewMapsProps) {
       if (MapLibreGL) {
         map.current = new MapLibreGL.Map({
           container: mapContainer.current,
-          style: 'https://tiles.openfreemap.org/styles/liberty', // OpenFreeMap Liberty style
-          center: [-122.4324, 37.78825], // San Francisco
-          zoom: 10
+          style: MapConfig.style,
+          center: MapConfig.center,
+          zoom: MapConfig.zoom,
+          pitch: MapConfig.pitch,
+          bearing: MapConfig.bearing,
+          minZoom: MapConfig.minZoom,
+          maxZoom: MapConfig.maxZoom
+        });
+
+        // Add globe control
+        // map.current.addControl(new MapLibreGL.GlobeControl(), 'top-right');
+        // TerrainControl doesn't exist in MapLibre GL JS
+        // map.current.addControl(new MapLibreGL.NavigationControl(), 'top-right');
+
+        // Set projection to globe after style loads
+        map.current.on('style.load', () => {
+          map.current.setProjection({
+            type: 'globe'
+          });
+          
+          // Add terrain source for 3D elevation
+          // map.current.addSource('terrain', {
+          //   type: 'raster-dem',
+          //   url: 'https://api.maptiler.com/tiles/terrain-rgb/tiles.json?key=REPLACED_API_KEY',
+          //   tileSize: 256,
+          //   maxzoom: 14
+          // });
+          
+          // Enable 3D terrain
+          // map.current.setTerrain({
+          //   source: 'terrain'
+          // });
         });
 
         map.current.on('load', () => {
           console.log('✅ [WEB] Map loaded successfully');
+          
+          // Start permanent continuous rotation
+          const startContinuousRotation = () => {
+            map.current.rotateTo(360, { duration: 80000 }); // 80 second full rotation (20 * 4)
+            setTimeout(startContinuousRotation, 80000); // Restart rotation
+          };
+          startContinuousRotation();
+          
+          // Start location cycling
+          let currentLocationIndex = 0;
+          
+          const flyToNextLocation = () => {
+            const location = MapConfig.locations[currentLocationIndex];
+            console.log('🌍 [WEB] Flying to:', location.name);
+            
+            // Alternate between 120° and -120° for each flyTo
+            const bearing = currentLocationIndex % 2 === 0 ? 120 : -120;
+            
+            // Fly to location with zoom and pitch animation
+            map.current.flyTo({
+              center: location.center,
+              zoom: 11,
+              pitch: 65,
+              bearing: bearing,
+              duration: 30000,
+              essential: true
+            });
+            
+            // After flyTo completes, increase zoom + change bearing
+            setTimeout(() => {
+              console.log('🔍 [WEB] Increasing zoom and changing bearing');
+              
+              // Increase zoom by 1 level and change bearing
+              const newBearing = bearing === 120 ? -120 : 120; // Flip bearing
+              
+              map.current.flyTo({
+                center: location.center,
+                zoom: 12, // +1 zoom level
+                pitch: 65,
+                bearing: newBearing,
+                duration: 2000, // Quick transition
+                essential: true
+              });
+              
+              // After 5 second pause, zoom out 2 levels and change bearing again
+              setTimeout(() => {
+                console.log('🔍 [WEB] Zooming out 2 levels and changing bearing');
+                
+                // Zoom out 2 levels and flip bearing again
+                const finalBearing = newBearing === 120 ? -120 : 120; // Flip bearing again
+                
+                map.current.flyTo({
+                  center: location.center,
+                  zoom: 10, // 12 - 2 = 10 (zoom out 2 levels)
+                  pitch: 65,
+                  bearing: finalBearing,
+                  duration: 2000, // Quick transition
+                  essential: true
+                });
+                
+                // After zoom out, move to next location
+                setTimeout(() => {
+                  currentLocationIndex = (currentLocationIndex + 1) % MapConfig.locations.length;
+                }, 2000);
+                
+              }, 5000);
+              
+            }, 30000); // Wait for initial flyTo to complete
+          };
+          
+          // Start cycling - fly to first location immediately
+          flyToNextLocation();
+          
+          // Then cycle every 39 seconds (30s flight + 2s zoom in + 5s pause + 2s zoom out = 39s total)
+          setInterval(flyToNextLocation, 39000);
         });
       }
     }
@@ -77,9 +176,7 @@ export default function WebViewMapsComponent({ styles }: WebViewMapsProps) {
       return (
         <View style={styles.container}>
           <View style={styles.webFallback}>
-            <Text style={styles.webText}>🗺️ Map View</Text>
-            <Text style={styles.webSubtext}>San Francisco, CA</Text>
-            <Text style={styles.webSubtext}>Loading map...</Text>
+            <Text style={styles.webText}>Loading map...</Text>
           </View>
         </View>
       );
@@ -100,121 +197,182 @@ export default function WebViewMapsComponent({ styles }: WebViewMapsProps) {
     );
   }
 
-  // For native platforms, use WebView with OpenFreeMap
+  // For native platforms, use WebView
   if (!WebView) {
     return (
       <View style={styles.container}>
         <View style={styles.webFallback}>
-          <Text style={styles.webText}>🗺️ Map View</Text>
-          <Text style={styles.webSubtext}>WebView not available</Text>
-          <Text style={styles.webSubtext}>Need to rebuild with WebView</Text>
+          <Text style={styles.webText}>WebView not available</Text>
         </View>
       </View>
     );
   }
 
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-          <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" />
-          <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
-          <style>
-            body { 
-              padding: 0; 
-              margin: 0; 
-              font-family: Arial, sans-serif;
-              background: #f0f0f0;
-            }
-            #map { 
-              height: 100vh; 
-              width: 100vw; 
-              background: #e0e0e0;
-            }
-            .info {
-              position: absolute;
-              top: 10px;
-              left: 10px;
-              background: white;
-              padding: 10px;
-              border-radius: 5px;
-              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-              z-index: 1000;
-              font-size: 14px;
-            }
-            .debug {
-              position: absolute;
-              bottom: 10px;
-              left: 10px;
-              background: rgba(0,0,0,0.8);
-              color: white;
-              padding: 10px;
-              border-radius: 5px;
-              font-size: 12px;
-              z-index: 1000;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="info">
-            <strong>🗺️ OpenFreeMap</strong><br>
-            San Francisco, CA<br>
-            Platform: ${Platform.OS}
-          </div>
-          <div id="map"></div>
-          <div class="debug" id="debug"></div>
-          <script>
-            console.log('🚀 [WEBVIEW] Starting map initialization...');
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+      <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.7.2/dist/maplibre-gl.css" />
+      <script src="https://unpkg.com/maplibre-gl@5.7.2/dist/maplibre-gl.js"></script>
+      <script>
+        const MapConfig = ${JSON.stringify(MapConfig)};
+      </script>
+      <style>
+        body { 
+          padding: 0; 
+          margin: 0; 
+          font-family: Arial, sans-serif;
+        }
+        #map { 
+          height: 100vh; 
+          width: 100vw; 
+          background: radial-gradient(circle at center,rgb(5, 0, 31),rgb(0, 0, 1));
+        }
+        
+        /* Scale attribution control to 3x smaller */
+        .maplibregl-ctrl-attrib {
+          display: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        console.log('�� [WEBVIEW] Starting map initialization...');
+        
+        if (typeof maplibregl === 'undefined') {
+          console.log('❌ MapLibre GL not loaded!');
+        } else {
+          console.log('✅ MapLibre GL loaded');
+          
+          try {
+            var map = new maplibregl.Map({
+              container: 'map',
+              style: MapConfig.style,
+              center: MapConfig.center,
+              zoom: MapConfig.zoom,
+              pitch: MapConfig.pitch,
+              bearing: MapConfig.bearing,
+              minZoom: MapConfig.minZoom,
+              maxZoom: MapConfig.maxZoom
+            });
             
-            function updateDebug(message) {
-              const debug = document.getElementById('debug');
-              if (debug) {
-                debug.innerHTML += message + '<br>';
-              }
-              console.log('🐛 [WEBVIEW] ' + message);
-            }
+            // Add navigation control
+            // map.addControl(new maplibregl.NavigationControl(), 'top-right');
             
-            updateDebug('Checking MapLibre GL...');
-            
-            if (typeof maplibregl === 'undefined') {
-              updateDebug('❌ MapLibre GL not loaded!');
-            } else {
-              updateDebug('✅ MapLibre GL loaded');
+            // Set projection to globe after style loads
+            map.on('style.load', function() {
+              map.setProjection({
+                type: 'globe'
+              });
               
-              try {
-                updateDebug('Creating map...');
-                var map = new maplibregl.Map({
-                  container: 'map',
-                  style: 'https://tiles.openfreemap.org/styles/liberty',
-                  center: [-122.4324, 37.78825], // San Francisco
-                  zoom: 10
+              // Add terrain source for 3D elevation
+              // map.addSource('terrain', {
+              //   type: 'raster-dem',
+              //   url: 'https://api.maptiler.com/tiles/terrain-rgb/tiles.json?key=REPLACED_API_KEY',
+              //   tileSize: 256,
+              //   maxzoom: 14
+              // });
+              
+              // Enable 3D terrain
+              // map.setTerrain({
+              //   source: 'terrain',
+              //   exaggeration: 2
+              // });
+            });
+            
+            map.on('load', function() {
+              console.log('✅ Map loaded successfully!');
+              
+              // Start permanent continuous rotation
+              const startContinuousRotation = () => {
+                map.rotateTo(360, { duration: 80000 }); // 80 second full rotation
+                setTimeout(startContinuousRotation, 80000); // Restart rotation
+              };
+              startContinuousRotation();
+              
+              // Start location cycling
+              let currentLocationIndex = 0;
+              
+              const flyToNextLocation = () => {
+                const location = MapConfig.locations[currentLocationIndex];
+                console.log('🌍 Flying to:', location.name);
+                
+                // Alternate between 120° and -120° for each flyTo
+                const bearing = currentLocationIndex % 2 === 0 ? 120 : -120;
+                
+                // Fly to location with zoom and pitch animation
+                map.flyTo({
+                  center: location.center,
+                  zoom: 11,
+                  pitch: 65,
+                  bearing: bearing,
+                  duration: 30000,
+                  essential: true
                 });
                 
-                map.on('load', function() {
-                  updateDebug('✅ Map loaded successfully!');
+                // After flyTo completes, increase zoom + change bearing
+                setTimeout(() => {
+                  console.log('🔍 Increasing zoom and changing bearing');
                   
-                  // Add a marker
-                  new maplibregl.Marker()
-                    .setLngLat([-122.4324, 37.78825])
-                    .setPopup(new maplibregl.Popup().setHTML('<b>San Francisco</b><br>Welcome to OpenFreeMap!'))
-                    .addTo(map);
+                  // Increase zoom by 1 level and change bearing
+                  const newBearing = bearing === 120 ? -120 : 120; // Flip bearing
                   
-                  updateDebug('✅ Markers added');
-                });
-                
-                map.on('error', function(e) {
-                  updateDebug('❌ Map error: ' + e.error.message);
-                });
-                
-              } catch (error) {
-                updateDebug('❌ Error creating map: ' + error.message);
-              }
-            }
-          </script>
-        </body>
-        </html>
-      `;
+                  map.flyTo({
+                    center: location.center,
+                    zoom: 12, // +1 zoom level
+                    pitch: 65,
+                    bearing: newBearing,
+                    duration: 2000, // Quick transition
+                    essential: true
+                  });
+                  
+                  // After 5 second pause, zoom out 2 levels and change bearing again
+                  setTimeout(() => {
+                    console.log('🔍 Zooming out 2 levels and changing bearing');
+                    
+                    // Zoom out 2 levels and flip bearing again
+                    const finalBearing = newBearing === 120 ? -120 : 120; // Flip bearing again
+                    
+                    map.flyTo({
+                      center: location.center,
+                      zoom: 10, // 12 - 2 = 10 (zoom out 2 levels)
+                      pitch: 65,
+                      bearing: finalBearing,
+                      duration: 2000, // Quick transition
+                      essential: true
+                    });
+                    
+                    // After zoom out, move to next location
+                    setTimeout(() => {
+                      currentLocationIndex = (currentLocationIndex + 1) % MapConfig.locations.length;
+                    }, 2000);
+                    
+                  }, 5000);
+                  
+                }, 30000); // Wait for initial flyTo to complete
+              };
+              
+              // Start cycling - fly to first location immediately
+              flyToNextLocation();
+              
+              // Then cycle every 39 seconds (30s flight + 2s zoom in + 5s pause + 2s zoom out = 39s total)
+              setInterval(flyToNextLocation, 39000);
+            });
+            
+            map.on('error', function(e) {
+              console.log('❌ Map error: ' + e.error.message);
+            });
+            
+          } catch (error) {
+            console.log('❌ Error creating map: ' + error.message);
+          }
+        }
+      </script>
+    </body>
+    </html>
+  `;
 
   return (
     <View style={styles.container}>
@@ -224,12 +382,8 @@ export default function WebViewMapsComponent({ styles }: WebViewMapsProps) {
         javaScriptEnabled={true}
         domStorageEnabled={true}
         startInLoadingState={true}
-        onLoadEnd={() => {
-          console.log('✅ [TV] Map loaded successfully');
-        }}
-        onError={(error: any) => {
-          console.log('❌ [TV] Map error:', error);
-        }}
+        onLoadEnd={() => console.log('✅ [TV] Map loaded successfully')}
+        onError={(error: any) => console.log('❌ [TV] Map error:', error)}
       />
     </View>
   );
