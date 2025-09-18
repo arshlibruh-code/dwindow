@@ -4,6 +4,7 @@ import { useScale } from '@/hooks/useScale';
 
 // WebView map component
 import WebViewMapsComponent from '../components/maps.webview';
+import DigitalClock from '../components/DigitalClock';
 
 export default function HomeScreen() {
   const scale = useScale();
@@ -11,8 +12,13 @@ export default function HomeScreen() {
 
   console.log(`🚀 [${Platform.OS.toUpperCase()}] HomeScreen loaded - Platform: ${Platform.OS}`);
 
-  // WebView + Leaflet for both web and native
-  return <WebViewMapsComponent styles={styles} />;
+  // WebView + Leaflet for both web and native with digital clock overlay
+  return (
+    <View style={styles.container}>
+      <WebViewMapsComponent styles={styles} />
+      <DigitalClock />
+    </View>
+  );
 }
 
 const useHomeScreenStyles = (scale: number) => StyleSheet.create({

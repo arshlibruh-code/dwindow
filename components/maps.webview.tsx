@@ -222,7 +222,7 @@ export default function WebViewMapsComponent({ styles }: WebViewMapsProps) {
         body { 
           padding: 0; 
           margin: 0; 
-          font-family: Arial, sans-serif;
+          font-family: Quantico, sans-serif;
         }
         #map { 
           height: 100vh; 

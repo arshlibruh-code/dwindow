@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 
 export default function DigitalClock() {
   const [time, setTime] = useState(new Date());
@@ -26,7 +26,7 @@ export default function DigitalClock() {
     const day = days[date.getDay()];
     const dayNum = date.getDate().toString().padStart(2, '0');
     const month = months[date.getMonth()];
-    const year = date.getFullYear().toString().slice(-2); // Last 2 digits of year
+    const year = date.getFullYear().toString(); // Last 2 digits of year
     
     return `${day} ${dayNum} ${month} ${year}`;
   };
@@ -42,30 +42,31 @@ export default function DigitalClock() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 50,
-    right: 50,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -100 }, { translateY: -50 }], // Center the clock
+    backgroundColor: 'transparent',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
+    backdropFilter: 'blur(20px)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   timeText: {
-    color: '#00ff00',
+    color: '#ffffff',
     fontSize: 48,
     fontWeight: 'bold',
-    fontFamily: 'monospace',
-    textShadowColor: '#000',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica-Bold' : 'Roboto-Bold',
+    lineHeight: 48,
+    
   },
   dateText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 10,
     fontWeight: 'bold',
-    fontFamily: 'monospace',
-    marginTop: 5,
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'Roboto',
+    marginTop: 3,
+    opacity: 0.5,
   },
 });
