@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, Platform, Text } from 'react-native';
+import { View, StyleSheet, Platform, Text, ActivityIndicator } from 'react-native';
 import { useScale } from '@/hooks/useScale';
 
-// WebView map component
-import WebViewMapsComponent from '../components/maps.webview';
+// Map component
+import MapsComponent from '../components/maps/MapsComponent';
 import DigitalClock from '../components/DigitalClock';
 
 export default function HomeScreen() {
@@ -15,7 +15,7 @@ export default function HomeScreen() {
   // WebView + Leaflet for both web and native with digital clock overlay
   return (
     <View style={styles.container}>
-      <WebViewMapsComponent styles={styles} />
+      <MapsComponent styles={styles} />
       <DigitalClock />
     </View>
   );
@@ -32,8 +32,14 @@ const useHomeScreenStyles = (scale: number) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backdropFilter: 'blur(20px)',
+    zIndex: 9999,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   webText: {
     fontSize: 24 * scale,
