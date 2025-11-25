@@ -8,7 +8,7 @@ A beautiful screensaver-style app for TV that displays an interactive 3D globe m
 
 Watch dwindow in action with smooth location transitions, beautiful 3D globe rendering, and TV-optimized interactions.
 
-![dwindow Demo](assets/images/demo/dwindow-demo.gif)
+<img src="assets/images/demo/dwindow-demo.gif" width="100%" alt="dwindow Demo">
 
 *Main demo showcasing the screensaver cycling through multiple locations at 6x speed*
 
