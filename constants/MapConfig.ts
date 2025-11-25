@@ -2,13 +2,20 @@
  * Simple map configuration for dwindow app
  */
 
+// Get API key from environment variable
+const MAPTILER_API_KEY = process.env.EXPO_PUBLIC_MAPTILER_API_KEY || '';
+
+if (!MAPTILER_API_KEY) {
+  console.warn('Warning: MAPTILER_API_KEY is not set. Map may not work correctly.');
+}
+
 export const MapConfig = {
   // Default location
   center: [0, 0], // Equator and Prime Meridian intersection
   zoom: 0, // Lower zoom for globe view
   
   // Map style
-  style: 'https://api.maptiler.com/maps/satellite/style.json?key=REPLACED_API_KEY',
+  style: `https://api.maptiler.com/maps/satellite/style.json?key=${MAPTILER_API_KEY}`,
   
   // Map options
   pitch: 0,

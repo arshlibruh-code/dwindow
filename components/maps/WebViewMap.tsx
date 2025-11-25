@@ -87,7 +87,12 @@ export default function WebViewMap({ styles }: WebViewMapProps) {
                 try {
                   // Extract API key from style URL
                   var apiKeyMatch = MapConfig.style.match(/key=([^&]+)/);
-                  var apiKey = apiKeyMatch ? apiKeyMatch[1] : 'REPLACED_API_KEY';
+                  var apiKey = apiKeyMatch ? apiKeyMatch[1] : '';
+                  
+                  if (!apiKey) {
+                    console.warn('MapTiler API key not found. Terrain will not be available.');
+                    return;
+                  }
 
                   // Add terrain source using TileJSON endpoint (MapLibre handles this correctly)
                   map.addSource('terrain-source', {

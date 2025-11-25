@@ -117,7 +117,12 @@ export function useMapSetup({ containerRef, enabled, onMapLoad }: UseMapSetupOpt
           try {
             // Extract API key from style URL
             const apiKeyMatch = MapConfig.style.match(/key=([^&]+)/);
-            const apiKey = apiKeyMatch ? apiKeyMatch[1] : 'REPLACED_API_KEY';
+            const apiKey = apiKeyMatch ? apiKeyMatch[1] : '';
+            
+            if (!apiKey) {
+              console.warn('MapTiler API key not found. Terrain will not be available.');
+              return;
+            }
 
             // Add terrain source using TileJSON endpoint (MapLibre handles this correctly)
             map.addSource('terrain-source', {
